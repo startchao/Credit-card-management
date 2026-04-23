@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>信用卡管理中心</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --text: #f0ece4;
+    --text2: #8a8480;
+    --gold: #c9a96e;
+    --gold2: #e8c98a;
+    --red: #e05c5c;
+    --yellow: #d4a847;
+    --green: #6ab187;
+    --blue: #6b9fd4;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a1612 0%, #0f0f0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+  }
+
+  .header-date {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* Tab Nav */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0f0f0f;
+    font-weight: 600;
+  }
+
+  /* Pages */
+  .page { display: none; padding: 20px; }
+  .page.active { display: block; }
+
+  /* Section Title */
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title span { font-size: 16px; }
+
+  /* Card Block */
+  .card-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .card-block.status-open::before { background: var(--green); }
+  .card-block.status-warn::before { background: var(--yellow); }
+  .card-block.status-closed::before { background: var(--border); }
+  .card-block.status-drawer::before { background: var(--text2); }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .card-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .card-bank {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .card-badges {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .badge-owner { background: #2a2535; color: #9d85d4; }
+  .badge-biz { background: #1e2d2a; color: var(--green); }
+  .badge-drawer { background: #252525; color: var(--text2); }
+  .badge-closed { background: #2a1e1e; color: var(--red); }
+
+  .card-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .card-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .card-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .card-meta-value { color: var(--text); font-weight: 500; font-size: 13px; }
+
+  .fee-warn { color: var(--yellow) !important; }
+  .fee-alert { color: var(--red) !important; }
+  .fee-ok { color: var(--green) !important; }
+
+  .signup-bonus {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 2px solid var(--yellow);
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .signup-bonus strong { color: var(--yellow); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .drawer-note {
+    margin-top: 10px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  /* Owner separator */
+  .owner-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text2);
+    margin: 20px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .owner-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Benefits */
+  .benefit-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .benefit-group-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .benefit-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .benefit-period-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: #2a2418;
+    color: var(--gold);
+    border: 1px solid #3d3420;
+  }
+
+  .benefit-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .benefit-item:last-child { border-bottom: none; }
+  .benefit-item.checked { background: #161e18; }
+
+  .benefit-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+
+  .benefit-check.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .benefit-check.checked::after {
+    content: '✓';
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .benefit-info { flex: 1; }
+
+  .benefit-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .benefit-detail {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .benefit-card-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text2);
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .benefit-urgent {
+    border-left: 2px solid var(--red);
+  }
+
+  .benefit-soon {
+    border-left: 2px solid var(--yellow);
+  }
+
+  /* Assets */
+  .asset-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .asset-group-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .asset-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .asset-item:last-child { border-bottom: none; }
+
+  .asset-label { font-size: 13px; color: var(--text2); }
+  .asset-sublabel { font-size: 10px; color: #555; margin-top: 2px; }
+
+  .asset-input-wrap { display: flex; align-items: center; gap: 6px; }
+
+  .asset-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 10px;
+    width: 130px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .asset-input:focus { border-color: var(--gold); }
+
+  .asset-unit {
+    font-size: 11px;
+    color: var(--text2);
+    min-width: 30px;
+  }
+
+  .asset-value {
+    font-size: 11px;
+    color: var(--green);
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .total-bar {
+    background: linear-gradient(135deg, #1e1a12, #1a1a1a);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .total-label {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .total-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--gold2);
+  }
+
+  /* AI Panel */
+  .ai-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .ai-header {
+    padding: 16px;
+    background: linear-gradient(135deg, #1e1a12, #1a1818);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ai-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .ai-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  .ai-subtitle {
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+
+  .ai-quick-btns {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ai-quick-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+
+  .ai-quick-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-quick-btn:hover, .ai-quick-btn:active {
+    border-color: var(--gold);
+    background: #1e1a12;
+  }
+
+  .ai-quick-btn .btn-icon { font-size: 15px; }
+
+  .ai-messages {
+    padding: 16px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ai-empty {
+    color: var(--text2);
+    font-size: 13px;
+    text-align: center;
+    margin: auto;
+    line-height: 1.6;
+  }
+
+  .msg { display: flex; gap: 8px; }
+
+  .msg-user { flex-direction: row-reverse; }
+
+  .msg-bubble {
+    max-width: 80%;
+    padding: 10px 13px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .msg-user .msg-bubble {
+    background: var(--gold);
+    color: #0f0f0f;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg-ai .msg-bubble {
+    background: var(--surface2);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .msg-ai .msg-bubble p { margin-bottom: 6px; }
+  .msg-ai .msg-bubble p:last-child { margin-bottom: 0; }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text2);
+    animation: typing 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  .ai-input-area {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  .ai-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+    resize: none;
+    line-height: 1.4;
+    max-height: 100px;
+  }
+
+  .ai-input:focus { border-color: var(--gold); }
+
+  .ai-send-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--gold);
+    border: none;
+    color: #0f0f0f;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: flex-end;
+    transition: background 0.2s;
+  }
+
+  .ai-send-btn:hover { background: var(--gold2); }
+  .ai-send-btn:disabled { background: var(--border); color: var(--text2); cursor: not-allowed; }
+
+  /* Alerts Banner */
+  .alerts-banner {
+    background: linear-gradient(135deg, #1e1410, #1a1510);
+    border: 1px solid #3d2e18;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .alerts-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--yellow);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .alert-line {
+    font-size: 12px;
+    color: var(--text);
+    padding: 5px 0;
+    border-bottom: 1px solid #2a2010;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .alert-line:last-child { border-bottom: none; }
+  .alert-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .alert-dot.red { background: var(--red); }
+  .alert-dot.yellow { background: var(--yellow); }
+
+  /* Util */
+  .mt-20 { margin-top: 20px; }
+  .text-dim { color: var(--text2); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>💳 信用卡管理中心</h1>
+    <div class="header-date" id="today-date"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('overview')">📋 卡片總覽</button>
+    <button class="tab" onclick="showPage('benefits')">🎯 福利追蹤</button>
+    <button class="tab" onclick="showPage('assets')">💰 資產總覽</button>
+    <button class="tab" onclick="showPage('ai')">🤖 AI 顧問</button>
+  </div>
+</div>
+
+<!-- ===== PAGE 1: 卡片總覽 ===== -->
+<div class="page active" id="page-overview">
+
+  <div class="alerts-banner" id="alerts-section">
+    <div class="alerts-title">⚠️ 近期注意事項</div>
+    <div id="alerts-content"></div>
+  </div>
+
+  <div class="owner-label">Start（Tony）</div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Platinum（大白）</div>
+        <div class="card-bank">American Express</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item">
+        <span class="card-meta-label">年費</span>
+        <span class="card-meta-value">$895</span>
+      </div>
+      <div class="card-meta-item">
+        <span class="card-meta-label">下次年費</span>
+        <span class="card-meta-value fee-warn" id="fee-amex-plat">計算中...</span>
+      </div>
+      <div class="card-meta-item">
+        <span class="card-meta-label">開卡日</span>
+        <span class="card-meta-value">2022-08-01</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Chase Sapphire Preferred</div>
+        <div class="card-bank">Chase</div>
+      </div>
+      <div class="card-badges"><span class="badge badge-owner">Start</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$95</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">下次年費</span><span class="card-meta-value" id="fee-csp">計算中...</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-04-14</span></div>
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Chase Marriott Boundless</div>
+        <div class="card-bank">Chase</div>
+      </div>
+      <div class="card-badges"><span class="badge badge-owner">Start</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$95</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">下次年費</span><span class="card-meta-value" id="fee-marriott">計算中...</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-07-05</span></div>
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Citi Rewards+</div>
+        <div class="card-bank">Citi（從 Premier 降級）</div>
+      </div>
+      <div class="card-badges"><span class="badge badge-owner">Start</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-10-16</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$8,000</span></div>
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Capital One Venture</div>
+        <div class="card-bank">Capital One</div>
+      </div>
+      <div class="card-badges"><span class="badge badge-owner">Start</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$95</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">下次年費</span><span class="card-meta-value" id="fee-venture">計算中...</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2026-02-13</span></div>
+    </div>
+    <div class="signup-bonus">
+      <strong>⏳ 開卡禮進行中</strong> — 3個月內刷滿 $4,000（截止 2026-05-13）
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">US Bank Altitude Connect（UAC）</div>
+        <div class="card-bank">US Bank</div>
+      </div>
+      <div class="card-badges"><span class="badge badge-owner">Start</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0 首年</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2026-03-16</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$9,000</span></div>
+    </div>
+    <div class="signup-bonus">
+      <strong>⏳ 開卡禮進行中</strong> — 3個月內刷滿 $1,000（截止 2026-06-16）
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Chase Ink Unlimited（CIU）</div>
+        <div class="card-bank">Chase 商業卡</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+        <span class="badge badge-biz">商業</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$95</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">下次年費</span><span class="card-meta-value" id="fee-ciu">計算中...</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2025-04-10</span></div>
+    </div>
+    <div class="signup-bonus">
+      <strong>✅ 開卡禮</strong> — 75,000 UR（3個月內刷滿 $6,000）
+    </div>
+  </div>
+
+  <!-- 抽屜卡 -->
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Discover IT</div>
+        <div class="card-bank">Discover</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2021-02-11</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$3,000</span></div>
+    </div>
+    <div class="drawer-note">📌 保留作信用紀錄累積用，偶爾刷一次保持活躍</div>
+  </div>
+
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Chase Freedom Unlimited（CFU）</div>
+        <div class="card-bank">Chase</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2021-03-24</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$6,000</span></div>
+    </div>
+    <div class="drawer-note">📌 保留作信用紀錄，若有需要可轉移額度至 CSP</div>
+  </div>
+
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Everyday（ED）</div>
+        <div class="card-bank">Amex（原 EDP 降級）</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2021-07-19</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$6,000</span></div>
+    </div>
+    <div class="drawer-note">📌 保留 Amex 帳齡，維持 MR 點數生態</div>
+  </div>
+
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Apple Card</div>
+        <div class="card-bank">Apple / Goldman Sachs</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-owner">Start</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-09-29</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$4,000</span></div>
+    </div>
+    <div class="drawer-note">📌 偶爾用於 Apple 生態購物，免年費保留</div>
+  </div>
+
+  <!-- Angel -->
+  <div class="owner-label">Angel（太太）</div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Hilton Honors</div>
+        <div class="card-bank">Amex（從 Surpass 降級）</div>
+      </div>
+      <div class="card-badges"><span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-01-01</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$10,000</span></div>
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Hilton Honors（HH 新開）</div>
+        <div class="card-bank">Amex</div>
+      </div>
+      <div class="card-badges"><span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2025-03-20</span></div>
+    </div>
+    <div class="signup-bonus">
+      <strong>⏳ 開卡禮進行中</strong> — 6個月內刷滿 $2,000（截止 2025-09-20）｜70,000 Hilton 點數 + 1FN
+    </div>
+  </div>
+
+  <div class="card-block status-open">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Chase UA Explorer</div>
+        <div class="card-bank">Chase</div>
+      </div>
+      <div class="card-badges"><span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span></div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$95</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">下次年費</span><span class="card-meta-value" id="fee-ua">計算中...</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-09-29</span></div>
+    </div>
+  </div>
+
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Everyday（ED）</div>
+        <div class="card-bank">Amex</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-12-01</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$6,000</span></div>
+    </div>
+    <div class="drawer-note">📌 保留 Amex 帳齡</div>
+  </div>
+
+  <div class="card-block status-drawer">
+    <div class="card-header">
+      <div>
+        <div class="card-name">BofA Cash Rewards</div>
+        <div class="card-bank">Bank of America</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span>
+        <span class="badge badge-drawer">🗂️ 抽屜卡</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">年費</span><span class="card-meta-value">$0</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2021-08-01</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">CL</span><span class="card-meta-value">$1,500</span></div>
+    </div>
+    <div class="drawer-note">📌 保留信用紀錄，BofA 銀行帳戶配套</div>
+  </div>
+
+  <div class="card-block status-closed">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Amex Gold（已停卡）</div>
+        <div class="card-bank">Amex</div>
+      </div>
+      <div class="card-badges">
+        <span class="badge" style="background:#1e1e2d;color:#6b9fd4;">Angel</span>
+        <span class="badge badge-closed">已關閉</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-meta-item"><span class="card-meta-label">關卡日</span><span class="card-meta-value">已停用</span></div>
+      <div class="card-meta-item"><span class="card-meta-label">開卡日</span><span class="card-meta-value">2022-05-01</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 2: 福利追蹤 ===== -->
+<div class="page" id="page-benefits">
+
+  <!-- 每季 -->
+  <div class="section-title"><span>📅</span> 季度福利</div>
+  <div class="text-dim" style="margin:-10px 0 12px">當前季度：<strong id="current-quarter"></strong></div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Amex Platinum（Start）</div>
+      <div class="benefit-period-badge">每季重置</div>
+    </div>
+
+    <div class="benefit-item" id="bi-lulu-q1" onclick="toggleBenefit('bi-lulu-q1')">
+      <div class="benefit-check" id="bc-lulu-q1"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$75 Lululemon Credit</div>
+        <div class="benefit-detail">美國 Lululemon 實體店或官網，需先 enrollment。可疊 Rakuten 回饋</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-resy-q1" onclick="toggleBenefit('bi-resy-q1')">
+      <div class="benefit-check" id="bc-resy-q1"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$100 Resy 餐廳 Credit</div>
+        <div class="benefit-detail">在 Resy 平台的美國餐廳消費，需 enrollment</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+  </div>
+
+  <!-- 每半年 -->
+  <div class="section-title mt-20"><span>📆</span> 半年福利</div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Amex Platinum（Start）</div>
+      <div class="benefit-period-badge">每半年重置</div>
+    </div>
+
+    <div class="benefit-item" id="bi-hotel-h1" onclick="toggleBenefit('bi-hotel-h1')">
+      <div class="benefit-check" id="bc-hotel-h1"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$300 飯店 Credit（上半年 1/1–6/30）</div>
+        <div class="benefit-detail">透過 Amex Travel 預付訂 Fine Hotels + Resorts 或 The Hotel Collection（THC 需住 2 晚以上）</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-hotel-h2" onclick="toggleBenefit('bi-hotel-h2')">
+      <div class="benefit-check" id="bc-hotel-h2"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$300 飯店 Credit（下半年 7/1–12/31）</div>
+        <div class="benefit-detail">同上，7月後可再使用一次 $300</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+  </div>
+
+  <!-- 每月 -->
+  <div class="section-title mt-20"><span>🗓️</span> 每月福利</div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Amex Platinum（Start）</div>
+      <div class="benefit-period-badge">每月重置</div>
+    </div>
+
+    <div class="benefit-item" id="bi-uber" onclick="toggleBenefit('bi-uber')">
+      <div class="benefit-check" id="bc-uber"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$15 Uber Cash（12月 $35）</div>
+        <div class="benefit-detail">需將大白加入 Uber 帳戶，用於美國 Uber Eats / 搭車</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-digital" onclick="toggleBenefit('bi-digital')">
+      <div class="benefit-check" id="bc-digital"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$25 數位娛樂 Credit</div>
+        <div class="benefit-detail">Disney+、Hulu、ESPN+、Peacock、NYT、WSJ、Paramount+、YouTube Premium/TV 等</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-walmart" onclick="toggleBenefit('bi-walmart')">
+      <div class="benefit-check" id="bc-walmart"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$12.95 Walmart+ Credit</div>
+        <div class="benefit-detail">支付 Walmart+ 月費即自動回饋，需 enrollment</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+  </div>
+
+  <!-- 每年 -->
+  <div class="section-title mt-20"><span>📌</span> 年度福利</div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Amex Platinum（Start）</div>
+      <div class="benefit-period-badge">每年重置</div>
+    </div>
+
+    <div class="benefit-item" id="bi-oura" onclick="toggleBenefit('bi-oura')">
+      <div class="benefit-check" id="bc-oura"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$200 Oura Ring Credit</div>
+        <div class="benefit-detail">從 ouraring.com 購買，需 enrollment</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-airline" onclick="toggleBenefit('bi-airline')">
+      <div class="benefit-check" id="bc-airline"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$200 航空附加費 Credit</div>
+        <div class="benefit-detail">選定一家航空（如 United），用於行李費、機上消費等附加費用</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-clear" onclick="toggleBenefit('bi-clear')">
+      <div class="benefit-check" id="bc-clear"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$189 CLEAR+ Credit</div>
+        <div class="benefit-detail">自動回饋 CLEAR+ 年費，台灣不常用但有出差美國可考慮</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+
+    <div class="benefit-item" id="bi-ge" onclick="toggleBenefit('bi-ge')">
+      <div class="benefit-check" id="bc-ge"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">Global Entry / TSA PreCheck Credit（$120）</div>
+        <div class="benefit-detail">每 4.5 年一次，申請 Global Entry 費用全額回饋</div>
+      </div>
+      <div class="benefit-card-tag">Amex Plat</div>
+    </div>
+  </div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Chase Sapphire Preferred（Start）</div>
+      <div class="benefit-period-badge">每年（週年日）</div>
+    </div>
+
+    <div class="benefit-item" id="bi-csp-hotel" onclick="toggleBenefit('bi-csp-hotel')">
+      <div class="benefit-check" id="bc-csp-hotel"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$50 飯店 Credit</div>
+        <div class="benefit-detail">透過 Chase Travel 訂房自動回饋，週年日後重置</div>
+      </div>
+      <div class="benefit-card-tag">CSP</div>
+    </div>
+
+    <div class="benefit-item" id="bi-csp-dash" onclick="toggleBenefit('bi-csp-dash')">
+      <div class="benefit-check" id="bc-csp-dash"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">DashPass 免費會員</div>
+        <div class="benefit-detail">需開通，有效至 2027/12/31，每月 $10 折扣 + 免外送費</div>
+      </div>
+      <div class="benefit-card-tag">CSP</div>
+    </div>
+  </div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Chase Marriott Boundless（Start）</div>
+      <div class="benefit-period-badge">每年（週年日）</div>
+    </div>
+
+    <div class="benefit-item" id="bi-marriott-fn" onclick="toggleBenefit('bi-marriott-fn')">
+      <div class="benefit-check" id="bc-marriott-fn"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">Free Night Award（≤35,000 點）</div>
+        <div class="benefit-detail">週年日後發放，可用於 Marriott 旗下飯店一晚</div>
+      </div>
+      <div class="benefit-card-tag">Marriott</div>
+    </div>
+  </div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Capital One Venture（Start）</div>
+      <div class="benefit-period-badge">每年</div>
+    </div>
+
+    <div class="benefit-item" id="bi-venture-ge" onclick="toggleBenefit('bi-venture-ge')">
+      <div class="benefit-check" id="bc-venture-ge"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">$100 Global Entry / TSA PreCheck Credit</div>
+        <div class="benefit-detail">每 4 年一次，與大白二擇一使用</div>
+      </div>
+      <div class="benefit-card-tag">Venture</div>
+    </div>
+  </div>
+
+  <div class="benefit-group">
+    <div class="benefit-group-header">
+      <div class="benefit-group-title">Chase UA Explorer（Angel）</div>
+      <div class="benefit-period-badge">每年（週年日）</div>
+    </div>
+
+    <div class="benefit-item" id="bi-ua-lounge" onclick="toggleBenefit('bi-ua-lounge')">
+      <div class="benefit-check" id="bc-ua-lounge"></div>
+      <div class="benefit-info">
+        <div class="benefit-name">2 張 United Club 單次入場券</div>
+        <div class="benefit-detail">週年日後發放，每年 2 張，搭乘 United 時使用</div>
+      </div>
+      <div class="benefit-card-tag">UA Explorer</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 3: 資產總覽 ===== -->
+<div class="page" id="page-assets">
+
+  <div class="section-title"><span>✈️</span> 點數餘額</div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Chase Ultimate Rewards（UR）</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">UR 點數</div>
+        <div class="asset-sublabel">來源：CSP / CIU / CFU</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-ur" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">pts</span>
+        </div>
+        <div class="asset-value" id="val-ur">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Amex Membership Rewards（MR）</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">MR 點數</div>
+        <div class="asset-sublabel">來源：Amex Platinum / ED</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-mr" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">pts</span>
+        </div>
+        <div class="asset-value" id="val-mr">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Hilton Honors 點數</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Hilton 點數</div>
+        <div class="asset-sublabel">來源：Amex Hilton 卡（Angel）</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-hilton" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">pts</span>
+        </div>
+        <div class="asset-value" id="val-hilton">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">United MileagePlus 哩程</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">UA 哩程</div>
+        <div class="asset-sublabel">來源：Chase UA Explorer（Angel）</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-ua" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">mi</span>
+        </div>
+        <div class="asset-value" id="val-ua">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Capital One Miles</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Capital One Miles</div>
+        <div class="asset-sublabel">來源：Venture 卡</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-c1" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">pts</span>
+        </div>
+        <div class="asset-value" id="val-c1">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Marriott Bonvoy 點數</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Marriott 點數</div>
+        <div class="asset-sublabel">來源：Chase Marriott Boundless</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <input class="asset-input" type="number" id="pts-marriott" placeholder="0" oninput="calcValues()">
+          <span class="asset-unit">pts</span>
+        </div>
+        <div class="asset-value" id="val-marriott">≈ $0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-bar">
+    <div>
+      <div class="total-label">點數總估值</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:3px">以常見兌換比率估算</div>
+    </div>
+    <div class="total-value" id="total-pts">$0</div>
+  </div>
+
+  <!-- 銀行帳戶 -->
+  <div class="section-title mt-20"><span>🏦</span> 銀行帳戶</div>
+  <div class="text-dim" style="margin:-10px 0 12px">Tony 的帳戶</div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Capital One（Tony）</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Checking / Savings</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <span style="color:var(--text2);font-size:13px">$</span>
+          <input class="asset-input" type="number" id="bank-c1" placeholder="0.00" oninput="calcBankTotal()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">SDCCU（San Diego Credit Union）</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Checking / Savings</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <span style="color:var(--text2);font-size:13px">$</span>
+          <input class="asset-input" type="number" id="bank-sdccu" placeholder="0.00" oninput="calcBankTotal()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">其他 Checking</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">其他帳戶</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <span style="color:var(--text2);font-size:13px">$</span>
+          <input class="asset-input" type="number" id="bank-other" placeholder="0.00" oninput="calcBankTotal()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-dim" style="margin:4px 0 12px">Angel 的帳戶</div>
+
+  <div class="asset-group">
+    <div class="asset-group-header">Bank of America（Angel）</div>
+    <div class="asset-item">
+      <div>
+        <div class="asset-label">Checking / Savings</div>
+      </div>
+      <div>
+        <div class="asset-input-wrap">
+          <span style="color:var(--text2);font-size:13px">$</span>
+          <input class="asset-input" type="number" id="bank-boa" placeholder="0.00" oninput="calcBankTotal()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-bar">
+    <div>
+      <div class="total-label">銀行存款合計</div>
+    </div>
+    <div class="total-value" id="total-bank">$0</div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 4: AI 顧問 ===== -->
+<div class="page" id="page-ai">
+
+  <div class="ai-panel">
+    <div class="ai-header">
+      <div class="ai-dot"></div>
+      <div class="ai-title">AI 信用卡顧問</div>
+      <div class="ai-subtitle">by Claude</div>
+    </div>
+
+    <div class="ai-quick-btns">
+      <div class="ai-quick-label">快速提問</div>
+      <button class="ai-quick-btn" onclick="quickAsk('根據我目前的信用卡狀況，現在適合開哪張新卡來獲得最好的開卡禮？請考慮 Chase 5/24 規則')">
+        <span class="btn-icon">🆕</span> 現在適合開哪張新卡？
+      </button>
+      <button class="ai-quick-btn" onclick="quickAsk('我有 UR、MR、Hilton、UA 哩程點數，請推薦最划算的兌換方式，特別是從台灣出發的航班或亞洲飯店住宿')">
+        <span class="btn-icon">✈️</span> 點數怎麼兌換最划算？
+      </button>
+      <button class="ai-quick-btn" onclick="quickAsk('Amex Platinum 年費已從 $695 漲到 $895，以我在台灣的使用情境，這張卡還值得保留嗎？哪些福利我比較難用到？')">
+        <span class="btn-icon">🤔</span> Amex 大白還值得留嗎？
+      </button>
+      <button class="ai-quick-btn" onclick="quickAsk('我目前的 Chase 卡有 CSP、Marriott Boundless、CIU，如何搭配使用來最大化 UR 點數的累積？')">
+        <span class="btn-icon">⚡</span> Chase 卡組合如何最佳化？
+      </button>
+    </div>
+
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-empty">點擊上方快速提問，<br>或在下方輸入你的問題</div>
+    </div>
+
+    <div id="typing-area" style="display:none">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+
+    <div class="ai-input-area">
+      <textarea class="ai-input" id="ai-input" placeholder="問任何信用卡相關問題..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="ai-send-btn" id="ai-send" onclick="sendMsg()">↑</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== State =====
+const state = {
+  benefits: JSON.parse(localStorage.getItem('cc_benefits') || '{}'),
+  assets: JSON.parse(localStorage.getItem('cc_assets') || '{}'),
+};
+
+function saveState() {
+  localStorage.setItem('cc_benefits', JSON.stringify(state.benefits));
+  localStorage.setItem('cc_assets', JSON.stringify(state.assets));
+}
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Date
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    now.toLocaleDateString('zh-TW', {year:'numeric',month:'long',day:'numeric'});
+
+  // Quarter
+  const q = Math.ceil((now.getMonth()+1)/3);
+  const qStart = ['1/1','4/1','7/1','10/1'][q-1];
+  const qEnd = ['3/31','6/30','9/30','12/31'][q-1];
+  document.getElementById('current-quarter').textContent = `Q${q}（${qStart} – ${qEnd}）`;
+
+  // Fee dates
+  calcFeeDates();
+
+  // Restore benefits
+  Object.keys(state.benefits).forEach(id => {
+    if (state.benefits[id]) applyCheck(id, true);
+  });
+
+  // Restore assets
+  const assetIds = ['pts-ur','pts-mr','pts-hilton','pts-ua','pts-c1','pts-marriott',
+                    'bank-c1','bank-sdccu','bank-other','bank-boa'];
+  assetIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && state.assets[id]) el.value = state.assets[id];
+  });
+  calcValues();
+  calcBankTotal();
+
+  // Alerts
+  buildAlerts(now);
+});
+
+// ===== Tab Nav =====
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== Fee Dates =====
+function calcFeeDates() {
+  const cards = [
+    {id:'fee-amex-plat', open:'2022-08-01'},
+    {id:'fee-csp',       open:'2022-04-14'},
+    {id:'fee-marriott',  open:'2022-07-05'},
+    {id:'fee-venture',   open:'2026-02-13'},
+    {id:'fee-ciu',       open:'2025-04-10'},
+    {id:'fee-ua',        open:'2022-09-29'},
+  ];
+
+  const now = new Date();
+  cards.forEach(({id, open}) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const d = new Date(open);
+    // next anniversary
+    let next = new Date(d);
+    next.setFullYear(now.getFullYear());
+    if (next <= now) next.setFullYear(now.getFullYear()+1);
+    const diff = Math.round((next - now) / 86400000);
+    const label = next.toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});
+    if (diff <= 30) {
+      el.textContent = `${label}（${diff}天）`;
+      el.className = 'card-meta-value fee-alert';
+    } else if (diff <= 60) {
+      el.textContent = `${label}（${diff}天）`;
+      el.className = 'card-meta-value fee-warn';
+    } else {
+      el.textContent = `${label}（${diff}天）`;
+      el.className = 'card-meta-value fee-ok';
+    }
+  });
+}
+
+// ===== Alerts =====
+function buildAlerts(now) {
+  const alerts = [];
+  const q = Math.ceil((now.getMonth()+1)/3);
+  const month = now.getMonth()+1;
+
+  // Q end approaching?
+  const qEndMonths = [3,6,9,12];
+  const qEndDays = [31,30,30,31];
+  const qIdx = q-1;
+  const qEndDate = new Date(now.getFullYear(), qEndMonths[qIdx]-1, qEndDays[qIdx]);
+  const daysToQEnd = Math.round((qEndDate - now)/86400000);
+
+  if (daysToQEnd <= 30) {
+    if (!state.benefits['bi-lulu-q1']) alerts.push({color:'red', text:`Amex Plat Q${q} $75 Lululemon 尚未使用，${daysToQEnd}天後季末`});
+    if (!state.benefits['bi-resy-q1']) alerts.push({color:'red', text:`Amex Plat Q${q} $100 Resy 尚未使用，${daysToQEnd}天後季末`});
+  }
+
+  // H1 end
+  if (month <= 6) {
+    const h1End = new Date(now.getFullYear(), 5, 30);
+    const daysH1 = Math.round((h1End-now)/86400000);
+    if (daysH1 <= 45 && !state.benefits['bi-hotel-h1']) {
+      alerts.push({color:'yellow', text:`Amex Plat 上半年 $300 飯店 credit，${daysH1}天後（6/30）到期`});
+    }
+  }
+
+  // Saks going away
+  alerts.push({color:'yellow', text:'Amex Plat Saks $50 credit 將於 2026/6/30 永久取消'});
+
+  // Signup bonuses
+  const signups = [
+    {deadline:'2026-05-13', name:'Capital One Venture 開卡禮', target:'$4,000'},
+    {deadline:'2026-06-16', name:'US Bank UAC 開卡禮', target:'$1,000'},
+  ];
+  signups.forEach(({deadline, name, target}) => {
+    const d = new Date(deadline);
+    const diff = Math.round((d-now)/86400000);
+    if (diff > 0 && diff <= 60) {
+      alerts.push({color: diff<=30?'red':'yellow', text:`${name} 截止 ${deadline}（剩 ${diff} 天，需刷滿 ${target}）`});
+    }
+  });
+
+  const container = document.getElementById('alerts-content');
+  if (alerts.length === 0) {
+    document.getElementById('alerts-section').style.display = 'none';
+    return;
+  }
+  container.innerHTML = alerts.map(a =>
+    `<div class="alert-line"><div class="alert-dot ${a.color}"></div>${a.text}</div>`
+  ).join('');
+}
+
+// ===== Benefits =====
+function toggleBenefit(id) {
+  const checked = !state.benefits[id];
+  state.benefits[id] = checked;
+  applyCheck(id, checked);
+  saveState();
+}
+
+function applyCheck(id, checked) {
+  const item = document.getElementById(id);
+  const check = document.getElementById('bc-'+id.slice(3));
+  if (!item || !check) return;
+  if (checked) {
+    item.classList.add('checked');
+    check.classList.add('checked');
+  } else {
+    item.classList.remove('checked');
+    check.classList.remove('checked');
+  }
+}
+
+// ===== Assets =====
+const ptRates = {ur:0.02, mr:0.02, hilton:0.005, ua:0.015, c1:0.018, marriott:0.008};
+
+function calcValues() {
+  const ids = ['ur','mr','hilton','ua','c1','marriott'];
+  let total = 0;
+  ids.forEach(k => {
+    const el = document.getElementById('pts-'+k);
+    const val = parseFloat(el?.value||0);
+    const usd = val * ptRates[k];
+    total += usd;
+    const vEl = document.getElementById('val-'+k);
+    if (vEl) vEl.textContent = `≈ $${usd.toFixed(0)}`;
+    if (el) state.assets['pts-'+k] = el.value;
+  });
+  document.getElementById('total-pts').textContent = '$'+total.toFixed(0);
+  saveState();
+}
+
+function calcBankTotal() {
+  const ids = ['bank-c1','bank-sdccu','bank-other','bank-boa'];
+  let total = 0;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    total += parseFloat(el?.value||0);
+    if (el) state.assets[id] = el.value;
+  });
+  document.getElementById('total-bank').textContent = '$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  saveState();
+}
+
+// ===== AI =====
+const AI_CONTEXT = `你是一位美國信用卡專家顧問。以下是用戶的持卡狀況：
+
+【Tony（Start）的卡】
+- Amex Platinum（大白）年費 $895，2022/8開卡。福利：每季 $75 Lululemon + $100 Resy，上下半年各 $300 飯店，每月 $15 Uber Cash + $25 數位娛樂 + $12.95 Walmart+，年度 $200 Oura + $200 航空附加費 + $189 CLEAR
+- Chase Sapphire Preferred（CSP）$95/年，2022/4開卡。週年 $50 飯店 credit + DashPass
+- Chase Marriott Boundless $95/年，2022/7開卡。週年免費夜（≤35k點）
+- Citi Rewards+ 免費，2022/10（從 Premier 降級）
+- Capital One Venture $95/年，2026/2開卡（開卡禮進行中，截止2026/5/13，需刷 $4,000）
+- US Bank Altitude Connect 免費首年，2026/3開卡（開卡禮進行中，截止2026/6/16）
+- Chase CIU 商業卡 $95/年，2025/4開卡
+- 抽屜卡：Discover IT（2021）、Chase CFU（2021）、Amex ED（2021）、Apple Card（2022）
+
+【Angel（太太）的卡】
+- Amex Hilton Honors $0，2022/1（從 Surpass 降級）
+- Amex Hilton HH $0，2025/3（開卡禮進行中，截止2025/9，需刷 $2,000）
+- Chase UA Explorer $95/年，2022/9
+- 抽屜卡：Amex ED（2022）、BofA Cash Rewards（2021）
+- 已關：Amex Gold
+
+【背景資訊】
+- 用戶居住台灣，偶爾出差美國（San Diego）
+- 在美國有 Chase、Capital One 銀行帳戶和 SDCCU 信用合作社
+- 持有 UR、MR、Hilton、UA、Capital One Miles、Marriott 點數
+- 過去積極玩卡（2021-2022），目前較少刷但出差時會考慮開新卡
+- Tony 在 Chase 目前有 CSP + Marriott + CIU + CFU + Discover，需注意 5/24 規則（目前應在 5/24 範圍內）
+
+請用繁體中文回答，簡潔務實，適合在手機上閱讀。`;
+
+let aiHistory = [];
+let isTyping = false;
+
+async function sendMsg() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg || isTyping) return;
+
+  addMsg(msg, 'user');
+  input.value = '';
+  input.style.height = 'auto';
+  aiHistory.push({role:'user', content: msg});
+  await callAI();
+}
+
+async function quickAsk(q) {
+  if (isTyping) return;
+  addMsg(q, 'user');
+  aiHistory.push({role:'user', content: q});
+  await callAI();
+}
+
+async function callAI() {
+  isTyping = true;
+  document.getElementById('ai-send').disabled = true;
+
+  const empty = document.querySelector('.ai-empty');
+  if (empty) empty.remove();
+
+  document.getElementById('typing-area').style.display = 'block';
+  scrollMessages();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: AI_CONTEXT,
+        messages: aiHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '抱歉，暫時無法取得回應';
+    aiHistory.push({role:'assistant', content: reply});
+    document.getElementById('typing-area').style.display = 'none';
+    addMsg(reply, 'ai');
+  } catch(e) {
+    document.getElementById('typing-area').style.display = 'none';
+    addMsg('連線錯誤，請稍後再試', 'ai');
+  }
+
+  isTyping = false;
+  document.getElementById('ai-send').disabled = false;
+}
+
+function addMsg(text, role) {
+  const container = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  // simple markdown-ish rendering
+  bubble.innerHTML = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  if (role === 'ai') bubble.innerHTML = '<p>' + bubble.innerHTML + '</p>';
+  div.appendChild(bubble);
+  container.appendChild(div);
+  scrollMessages();
+}
+
+function scrollMessages() {
+  const c = document.getElementById('ai-messages');
+  setTimeout(() => c.scrollTop = c.scrollHeight, 50);
+}
+</script>
+</body>
+</html>
